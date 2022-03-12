@@ -9,3 +9,5 @@ typedef struct Machine {
     uint32_t reg[16];
 } Machine;
 
+typedef void (*OpHandler)(Machine* machine);
+extern OpHandler op_handlers[];

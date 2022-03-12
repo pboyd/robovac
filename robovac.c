@@ -8,6 +8,7 @@
 #define MEMORY_SIZE 4096
 
 static size_t load_code(void* dest, size_t dest_size, char* path);
+static void dump_registers(uint32_t* reg);
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -26,6 +27,20 @@ int main(int argc, char** argv) {
         free(machine.memory);
         return 1;
     }
+
+    uint8_t opcode;
+    while (1) {
+        opcode = *(machine.memory+machine.reg[REG_IP]);
+
+        // Special case for RET
+        if (opcode == 0) {
+            break;
+        }
+
+        (*op_handlers[opcode])(&machine);
+    }
+
+    dump_registers(machine.reg);
 
     free(machine.memory);
     return 0;
@@ -53,4 +68,21 @@ static size_t load_code(void* dest, size_t dest_size, char* path) {
     fclose(fh);
 
     return size;
+}
+
+static void dump_registers(uint32_t* reg) {
+    char name[4];
+
+    for (size_t i = 0; i < 16; i++) {
+        switch (i) {
+            case REG_IP:
+                strncpy(name, "IP", 4);
+                break;
+            default:
+                snprintf(name, 4, "r%zu", i);
+        }
+        fprintf(stderr, "%s=0x%02x ", name, reg[i]);
+    }
+
+    fprintf(stderr, "\n");
 }
