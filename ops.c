@@ -7,6 +7,18 @@ void ret(Machine* machine) {
     machine->reg[REG_IP]++;
 }
 
+// Copy a 32-bit immediate value to a register.
+void mov_r32_i32(Machine* machine) {
+    uint8_t* start = machine->memory + machine->reg[REG_IP];
+    size_t dest = start[1] & 0xf;
+
+    uint32_t value;
+    load_uint32t(start+2, &value);
+    machine->reg[dest] = value;
+
+    machine->reg[REG_IP] += 6;
+}
+
 void invalid(Machine* machine) {
     // FIXME
     fprintf(stderr, "invalid opcode\n");
@@ -15,7 +27,7 @@ void invalid(Machine* machine) {
 
 OpHandler op_handlers[] = {
     &ret,           // 0x00: RET
-    &invalid,       // 0x01
+    &mov_r32_i32,   // 0x01: MOV r32, i32
     &invalid,       // 0x02
     &invalid,       // 0x03
     &invalid,       // 0x04
