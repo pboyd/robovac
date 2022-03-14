@@ -1,6 +1,11 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#define load_uint16t(src, dest) \
+    *(dest) = \
+    (uint32_t)((src)[0]) << 8 | \
+    (uint32_t)((src)[1])
+
 #define load_uint32t(src, dest) \
     *(dest) = \
     (uint32_t)((src)[0]) << 24 | \

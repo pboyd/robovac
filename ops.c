@@ -19,6 +19,29 @@ void mov_r32_i32(Machine* machine) {
     machine->reg[REG_IP] += 6;
 }
 
+// Add the value of two registers, storing the value in the first register.
+//
+// Takes two registers as operands, encoded in a single byte.
+void add_r32_r32(Machine* machine) {
+    uint8_t* start = machine->memory + machine->reg[REG_IP];
+    size_t reg1 = start[1] >> 4;
+    size_t reg2 = start[1] & 0xf;
+
+    machine->reg[reg1] += machine->reg[reg2];
+
+    machine->reg[REG_IP] += 2;
+}
+
+// Set IP to an absolute immediate 16-bit value.
+void jmp_abs_i16(Machine* machine) {
+    load_uint16t(machine->memory + machine->reg[REG_IP]+1, &machine->reg[REG_IP]);
+}
+
+// Increment/Decrement IP by an immediate 8-bit value.
+void jmp_rel_i8(Machine* machine) {
+    machine->reg[REG_IP] += (int8_t)(*(machine->memory + machine->reg[REG_IP] + 1));
+}
+
 void invalid(Machine* machine) {
     // FIXME
     fprintf(stderr, "invalid opcode\n");
@@ -28,9 +51,9 @@ void invalid(Machine* machine) {
 OpHandler op_handlers[] = {
     &ret,           // 0x00: RET
     &mov_r32_i32,   // 0x01: MOV r32, i32
-    &invalid,       // 0x02
-    &invalid,       // 0x03
-    &invalid,       // 0x04
+    &add_r32_r32,   // 0x02: ADD r32, r32
+    &jmp_abs_i16,   // 0x03: JMP i16
+    &jmp_rel_i8,    // 0x04: JMP i8
     &invalid,       // 0x05
     &invalid,       // 0x06
     &invalid,       // 0x07
