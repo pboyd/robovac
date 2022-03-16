@@ -27,7 +27,24 @@ void add_r32_r32(Machine* machine) {
     size_t reg1 = start[1] >> 4;
     size_t reg2 = start[1] & 0xf;
 
+    uint32_t old_value = machine->reg[reg1];
     machine->reg[reg1] += machine->reg[reg2];
+
+    machine->reg[REG_FL] &= ~(FLAG_ZF|FLAG_OF|FLAG_CF|FLAG_SF);
+
+    if (machine->reg[reg1] == 0)
+        machine->reg[REG_FL] |= FLAG_ZF;
+
+    if (SIGN(machine->reg[reg1]))
+        machine->reg[REG_FL] |= FLAG_SF;
+
+    // Set carry if the value wrapped around.
+    if (old_value > machine->reg[reg1])
+        machine->reg[REG_FL] |= FLAG_CF;
+
+    // Set overflow if the sign bits were the same before, but different after.
+    if (SIGN(old_value) == SIGN(machine->reg[reg2]) && SIGN(machine->reg[reg1]) != SIGN(machine->reg[reg2]))
+        machine->reg[REG_FL] |= FLAG_OF;
 
     machine->reg[REG_IP] += 2;
 }
@@ -42,6 +59,38 @@ void jmp_rel_i8(Machine* machine) {
     machine->reg[REG_IP] += (int8_t)(*(machine->memory + machine->reg[REG_IP] + 1));
 }
 
+// Jump by an immediate 8-bit value if zero flag is set.
+void jz_rel_i8(Machine* machine) {
+    if (machine->reg[REG_FL]&FLAG_ZF)
+        machine->reg[REG_IP] += (int8_t)(*(machine->memory + machine->reg[REG_IP] + 1));
+    else
+        machine->reg[REG_IP] += 2;
+}
+
+// Jump by an immediate 8-bit value if zero flag is not set.
+void jnz_rel_i8(Machine* machine) {
+    if (!(machine->reg[REG_FL]&FLAG_ZF))
+        machine->reg[REG_IP] += (int8_t)(*(machine->memory + machine->reg[REG_IP] + 1));
+    else
+        machine->reg[REG_IP] += 2;
+}
+
+// Jump by an immediate 8-bit value if carry flag is set.
+void jc_rel_i8(Machine* machine) {
+    if (machine->reg[REG_FL]&FLAG_CF)
+        machine->reg[REG_IP] += (int8_t)(*(machine->memory + machine->reg[REG_IP] + 1));
+    else
+        machine->reg[REG_IP] += 2;
+}
+
+// Jump by an immediate 8-bit value if carry flag is not set.
+void jnc_rel_i8(Machine* machine) {
+    if (!(machine->reg[REG_FL]&FLAG_CF))
+        machine->reg[REG_IP] += (int8_t)(*(machine->memory + machine->reg[REG_IP] + 1));
+    else
+        machine->reg[REG_IP] += 2;
+}
+
 void invalid(Machine* machine) {
     // FIXME
     fprintf(stderr, "invalid opcode\n");
@@ -54,10 +103,10 @@ OpHandler op_handlers[] = {
     &add_r32_r32,   // 0x02: ADD r32, r32
     &jmp_abs_i16,   // 0x03: JMP i16
     &jmp_rel_i8,    // 0x04: JMP i8
-    &invalid,       // 0x05
-    &invalid,       // 0x06
-    &invalid,       // 0x07
-    &invalid,       // 0x08
+    &jz_rel_i8,     // 0x05: JZ i8
+    &jnz_rel_i8,    // 0x06: JNZ i8
+    &jc_rel_i8,     // 0x07: jc i8
+    &jnc_rel_i8,    // 0x08: jnc i8
     &invalid,       // 0x09
     &invalid,       // 0x0a
     &invalid,       // 0x0b
