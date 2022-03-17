@@ -19,6 +19,17 @@ void mov_r32_i32(Machine* machine) {
     machine->reg[REG_IP] += 6;
 }
 
+// Copy one 32-bit register value to another register.
+void mov_r32_r32(Machine* machine) {
+    uint8_t* start = machine->memory + machine->reg[REG_IP];
+
+    size_t dest = start[1] >> 4;
+    size_t src = start[1] & 0xf;
+    machine->reg[dest] = machine->reg[src];
+
+    machine->reg[REG_IP] += 2;
+}
+
 // Add the value of two registers, storing the value in the first register.
 //
 // Takes two registers as operands, encoded in a single byte.
@@ -105,9 +116,9 @@ OpHandler op_handlers[] = {
     &jmp_rel_i8,    // 0x04: JMP i8
     &jz_rel_i8,     // 0x05: JZ i8
     &jnz_rel_i8,    // 0x06: JNZ i8
-    &jc_rel_i8,     // 0x07: jc i8
-    &jnc_rel_i8,    // 0x08: jnc i8
-    &invalid,       // 0x09
+    &jc_rel_i8,     // 0x07: JC i8
+    &jnc_rel_i8,    // 0x08: JNC i8
+    &mov_r32_r32,   // 0x09: MOV r32, r32
     &invalid,       // 0x0a
     &invalid,       // 0x0b
     &invalid,       // 0x0c
