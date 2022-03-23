@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     while (1) {
         opcode = *(machine.memory+machine.reg[REG_IP]);
 
-        // Special case for RET
+        // Special case for HLT
         if (opcode == 0) {
             break;
         }

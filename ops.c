@@ -2,8 +2,9 @@
 
 #include "robovac.h"
 
-void ret(Machine* machine) {
-    // FIXME: No-op for now.
+void hlt(Machine* machine) {
+    // Handled in the main loop, this should never be called.
+    // But if it is:
     machine->reg[REG_IP]++;
 }
 
@@ -109,7 +110,7 @@ void invalid(Machine* machine) {
 }
 
 OpHandler op_handlers[] = {
-    &ret,           // 0x00: RET
+    &hlt,           // 0x00: HLT
     &mov_r32_i32,   // 0x01: MOV r32, i32
     &add_r32_r32,   // 0x02: ADD r32, r32
     &jmp_abs_i16,   // 0x03: JMP i16
